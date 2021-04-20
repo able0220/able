@@ -1,0 +1,8 @@
+P5 사이트 주소
+
+https://editor.p5js.org/krantas/sketches/IKUf43rB
+
+
+시리얼 통신 사이트
+
+https://github.com/p5-serial/p5.serialcontrol/releases/tag/0.1.2
