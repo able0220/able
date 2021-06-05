@@ -1,0 +1,43 @@
+#include "LedControl.h"
+ 
+LedControl lc = LedControl(12,11,10,1);
+ 
+// 실행시 가장 먼저 호출되는 함수이며, 최초 1회만 실행됩니다.
+// 변수를 선언하거나 초기화를 위한 코드를 포함합니다.
+void setup()
+{
+  // 도트매트릭스의 절전모드를 꺼줍니다.
+  lc.shutdown(0,false);
+ 
+  // 도트매트릭스의 LED 밝기를 8로 지정해 줍니다.(0~15)
+  lc.setIntensity(0,8);
+ 
+  // 도트매트릭스의 LED를 초기화 해줍니다.
+  lc.clearDisplay(0);
+}
+ 
+ 
+// setup() 함수가 호출된 이후, loop() 함수가 호출되며,
+// 블록 안의 코드를 무한히 반복 실행됩니다.
+void loop()
+{
+  // 도트매트릭스의 LED를 첫번째 부터 1개씩 차례대로 켜줍니다.
+ for (int row=0; row<8; row++)
+  {
+    for (int col=0; col<8; col++)
+    {
+      lc.setLed(0,col,row,true);
+      delay(25);
+    }
+  }
+ 
+  // 도트매트릭스의 LED를 첫번째 부터 1개씩 차례대로 꺼줍니다.
+ for (int row=0; row<8; row++)
+  {
+    for (int col=0; col<8; col++)
+    {
+      lc.setLed(0,col,row,false);
+      delay(25);
+    }
+  }
+}
