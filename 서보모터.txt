@@ -31,7 +31,7 @@ void loop() {
       analogWrite(9,0);
       analogWrite(10,100);
       analogWrite(11,0);
-            my.write(90);
+            my.write(10);
       delay(500);
     }
 
