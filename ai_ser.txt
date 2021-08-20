@@ -1,0 +1,45 @@
+#include <Servo.h>
+
+char data;
+
+Servo servo1;
+Servo servo2;
+int servo1pin = 7;
+int servo2pin = 8;
+
+
+void setup() {
+  // put your setup code here, to run once:
+
+  servo1.attach(servo1pin);
+  servo2.attach(servo2pin);
+  Serial.begin(9600);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+
+  if(Serial.available()){
+
+    data = Serial.read();
+    if(data == '1')
+    {
+
+      servo1.write(10);
+      servo2.write(100);
+   
+    }
+    else if(data == '2')
+    {
+      
+  
+      servo1.write(100);
+      servo2.write(10);
+    }
+
+    
+  }
+
+
+}
