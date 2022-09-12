@@ -5,7 +5,7 @@ int col = 0;
 int row = 0;
 // lc.setLed(0,col,row,true);
 // lc.setLed(0,col,row,false); 
-
+char data;
 
 
 
@@ -20,20 +20,24 @@ void setup()
 
 void loop()
 {
+  if(Serial.available()){
 
-
-one();
-delay(500);  
-
-two();
-delay(500);  
-   
+    data = Serial.read();
+    if(data == '1')  // 티처블머신에서 사진이 1번이면 {   } 안에 내용 실행
+    {
+      one();
+    }
+    else if(data == '2')
+    {
+      two();
+    }
+}
 }
 
 void one(){
   int metrix[8][8]={
-    {0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,1,0,0,0},
+    {0,0,0,0,1,0,0,0},
     {0,0,0,0,0,0,0,0},
     {0,0,0,0,0,0,0,0},
     {0,0,0,0,0,0,0,0},
