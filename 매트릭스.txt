@@ -1,15 +1,17 @@
 
 
 
-char data;
-
 #include "LedControl.h"
-LedControl lc=LedControl(12,11,10,1); 
+LedControl lc = LedControl(10,12,11,1); //(DIN,CLK,CS,매트릭스 갯수)
 
 int col = 0;
 int row = 0;
 // lc.setLed(0,col,row,true);
 // lc.setLed(0,col,row,false); 
+
+
+
+
 void setup()
 {
   lc.shutdown(0,false); 
@@ -23,39 +25,80 @@ void loop()
 {
 
 
-if(Serial.available()){
+test1();
+delay(500);  
 
-    data = Serial.read();
-    if(data == '1')  // 티처블머신에서 사진이 1번이면 {   } 안에 내용 실행
-    {
- for(col = 0; col <8 ; col=col+2)
- {
-  for(row = 0; row <8 ; row=row+2)
- {
-  lc.setLed(0,col,row,true);
- }
- }
+test2();
+delay(500);  
+   
+}
 
-    }
-    else if(data == '2')
-    {
-      
-     for(col = 0; col <8 ; col=col+2)
- {
-  for(row = 0; row <8 ; row=row+2)
- {
-  lc.setLed(0,col,row,false);
- }
- }
+void one(){
+  int metrix[8][8]={
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0}
+  };
 
-    }
-
-    
-  }
-
+    for(col = 0; col <8 ; col=col+1)
+      {
+         for(row = 0; row <8 ; row=row+1)
+         {
+           lc.setLed(0,col,row,metrix[col][row]);
+         }
+      }
+}
 
 
 
+void two(){
+  int metrix[8][8]={
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0}
+  };
 
+    for(col = 0; col <8 ; col=col+1)
+      {
+         for(row = 0; row <8 ; row=row+1)
+         {
+           lc.setLed(0,col,row,metrix[col][row]);
+         }
+      }
+}
+
+
+
+
+void turnon()
+{
+       for(col = 0; col <8 ; col=col+1)
+      {
+         for(row = 0; row <8 ; row=row+1)
+         {
+           lc.setLed(0,col,row,true);
+         }
+      }
+}
+
+void turnoff()
+{
+       for(col = 0; col <8 ; col=col+1)
+      {
+       for(row = 0; row <8 ; row=row+1)
+       {
+        lc.setLed(0,col,row,false);
+       }
+}
 
 }
