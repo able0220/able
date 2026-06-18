@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>에이블 에듀테크 | 티처블 머신 시리얼 통신</title>
+
+  <!-- p5.js 본체 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <!-- ml5.js (Teachable Machine 이미지 분류) -->
+  <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
+  <!-- p5 시리얼 통신 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/p5.serialserver@0.0.29/lib/p5.serialport.js"></script>
+
+  <style>
+    :root {
+      --able-dark: #1b3a8c;
+      --able-mid: #2d6fd6;
+      --able-light: #5bb8ef;
+      --bg: #f4f8fd;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      margin: 0;
+      background: linear-gradient(160deg, #eef4fc 0%, #e3eefb 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+    }
+
+    /* 헤더 */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    header img {
+      height: 64px;
+      width: auto;
+    }
+    header .titles h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--able-dark);
+    }
+    header .titles p {
+      margin: 2px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* 설정 카드 */
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 28px rgba(27, 58, 140, 0.10);
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      margin: 0 0 18px;
+      font-size: 16px;
+      color: var(--able-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 18px;
+      border-radius: 3px;
+      background: linear-gradient(var(--able-light), var(--able-dark));
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #374151;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      border: 1.5px solid #d6e2f2;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: border-color .15s, box-shadow .15s;
+      background: #fbfdff;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--able-mid);
+      box-shadow: 0 0 0 3px rgba(45, 111, 214, 0.15);
+    }
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin: -12px 0 16px;
+    }
+    #start-btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(120deg, var(--able-mid), var(--able-dark));
+      transition: transform .08s, box-shadow .15s, opacity .15s;
+      box-shadow: 0 6px 16px rgba(27, 58, 140, 0.28);
+    }
+    #start-btn:hover { box-shadow: 0 8px 22px rgba(27, 58, 140, 0.38); }
+    #start-btn:active { transform: translateY(1px); }
+
+    /* 보조 버튼 (정지/다시시작) */
+    .btn-row { display: flex; gap: 10px; }
+    .btn-secondary {
+      flex: 1;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 10px;
+      border: 1.5px solid var(--able-mid);
+      background: #fff;
+      color: var(--able-mid);
+      transition: background .15s, transform .08s;
+    }
+    .btn-secondary:hover { background: #eef4fc; }
+    .btn-secondary:active { transform: translateY(1px); }
+    .btn-secondary:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      border: 1.5px solid #d6e2f2;
+      border-radius: 10px;
+      font-size: 14px;
+      background: #fbfdff;
+      cursor: pointer;
+    }
+    select:focus {
+      outline: none;
+      border-color: var(--able-mid);
+      box-shadow: 0 0 0 3px rgba(45, 111, 214, 0.15);
+    }
+
+    /* 상태 표시 */
+    #status {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      display: none;
+    }
+    #status.show { display: block; }
+    #status.info    { background: #eaf2fe; color: var(--able-dark); }
+    #status.success { background: #e6f7ec; color: #1b8a4b; }
+    #status.error   { background: #fdeaea; color: #c0392b; }
+
+    /* 캔버스 영역 */
+    #canvas-card { text-align: center; }
+    #canvas-card canvas {
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+    }
+    .label-badge {
+      margin-top: 16px;
+      display: inline-block;
+      min-width: 120px;
+      padding: 10px 24px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      border-radius: 12px;
+      background: linear-gradient(120deg, var(--able-light), var(--able-mid));
+      letter-spacing: 1px;
+    }
+    .label-badge small {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      opacity: .85;
+      letter-spacing: 0;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    footer b { color: var(--able-dark); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header>
+      <img src="data:image/png;base64,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" alt="에이블 에듀테크 로고" />
+      <div class="titles">
+        <h1>티처블 머신 시리얼 통신</h1>
+        <p>(주)에이블 에듀테크 · AI 이미지 인식 + 아두이노</p>
+      </div>
+    </header>
+
+    <div class="card" id="canvas-card">
+      <h2>실시간 인식</h2>
+      <div id="canvas-holder">
+        <p id="cam-placeholder" style="color:var(--muted);padding:40px 0;margin:0;">
+          아래에서 모델 주소와 포트를 입력하고 <b>시작하기</b>를 누르면<br>카메라 화면이 나타납니다.
+        </p>
+      </div>
+      <div class="label-badge" id="label-badge" style="display:none;">
+        대기 중
+        <small>현재 인식된 라벨</small>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>설정</h2>
+
+      <label for="model-input">티처블 머신 모델 주소</label>
+      <input type="text" id="model-input"
+        placeholder="https://teachablemachine.withgoogle.com/models/xxxxxx/"
+        value="" />
+      <p class="hint">티처블 머신에서 모델을 내보낸 뒤 받은 공유 링크를 붙여넣으세요.</p>
+
+      <label for="port-input">COM 포트</label>
+      <input type="text" id="port-input" placeholder="COM3" value="COM3" />
+      <p class="hint">장치 관리자에서 아두이노 포트 번호를 확인하세요. (예: COM3, COM5)</p>
+
+      <label for="camera-select">카메라 선택</label>
+      <select id="camera-select">
+        <option value="">시작하면 카메라 목록이 표시됩니다</option>
+      </select>
+      <p class="hint">노트북 내장 캠 / 외장 웹캠 중에서 선택할 수 있습니다.</p>
+
+      <button id="start-btn" onclick="startSketch()">시작하기</button>
+
+      <div class="btn-row" style="margin-top:10px;">
+        <button id="stop-btn" class="btn-secondary" onclick="stopSketch()" disabled>정지</button>
+        <button id="resume-btn" class="btn-secondary" onclick="resumeSketch()" disabled>다시 시작</button>
+      </div>
+
+      <div id="status"></div>
+    </div>
+
+    <footer>
+      Powered by <b>ABLE edutech</b> · ml5.js + p5.serialport
+    </footer>
+  </div>
+
+  <script>
+    let modelURL;
+    let serialPort;
+    let classifier;
+    let serial;
+    let video;
+    let flippedVideo;
+    let label = "";
+    let started = false;     // 한 번이라도 시작했는지 (모델/시리얼 준비됨)
+    let running = false;     // 현재 분류가 돌고 있는지
+    let selectedDeviceId = ""; // 선택된 카메라
+
+    function setStatus(msg, type) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = 'show ' + type;
+    }
+
+    // 페이지가 열리면 카메라 목록을 미리 채워둠
+    async function loadCameraList() {
+      const sel = document.getElementById('camera-select');
+      try {
+        // 라벨(카메라 이름)을 보려면 권한이 필요하므로 한 번 요청
+        const tmp = await navigator.mediaDevices.getUserMedia({ video: true });
+        tmp.getTracks().forEach(t => t.stop()); // 바로 끔
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cams = devices.filter(d => d.kind === 'videoinput');
+
+        sel.innerHTML = '';
+        if (cams.length === 0) {
+          sel.innerHTML = '<option value="">카메라를 찾을 수 없습니다</option>';
+          return;
+        }
+        cams.forEach((cam, i) => {
+          const opt = document.createElement('option');
+          opt.value = cam.deviceId;
+          opt.textContent = cam.label || ('카메라 ' + (i + 1));
+          sel.appendChild(opt);
+        });
+      } catch (e) {
+        sel.innerHTML = '<option value="">카메라 권한을 허용해 주세요</option>';
+      }
+    }
+
+    function startSketch() {
+      if (started) {
+        setStatus('이미 실행 중입니다. 카메라를 바꾸려면 정지 후 다시 시작하세요.', 'info');
+        return;
+      }
+
+      modelURL = document.getElementById('model-input').value.trim();
+      serialPort = document.getElementById('port-input').value.trim();
+      selectedDeviceId = document.getElementById('camera-select').value;
+
+      if (!modelURL || !serialPort) {
+        setStatus('모델 주소와 COM 포트를 모두 입력하세요.', 'error');
+        return;
+      }
+      if (!modelURL.endsWith('/')) modelURL += '/';
+
+      started = true;
+      running = true;
+      setStatus('모델을 불러오는 중입니다...', 'info');
+
+      classifier = ml5.imageClassifier(modelURL + 'model.json', modelLoaded);
+
+      serial = new p5.SerialPort();
+      serial.on('open', () => {
+        setStatus('시리얼 포트(' + serialPort + ') 연결 성공! 카메라 앞에 물체를 비춰보세요.', 'success');
+      });
+      serial.on('error', (err) => {
+        setStatus('시리얼 에러: ' + err + ' (아두이노 IDE 시리얼 모니터를 닫고 포트 번호를 확인하세요)', 'error');
+      });
+      serial.open(serialPort);
+    }
+
+    function modelLoaded() {
+      const ph = document.getElementById('cam-placeholder');
+      if (ph) ph.style.display = 'none';
+      document.getElementById('label-badge').style.display = 'inline-block';
+      const cnv = createCanvas(320, 240);
+      cnv.parent('canvas-holder');
+
+      startCamera();
+
+      document.getElementById('start-btn').disabled = true;
+      document.getElementById('stop-btn').disabled = false;
+    }
+
+    // 선택된 카메라로 비디오를 잡음
+    function startCamera() {
+      const constraints = selectedDeviceId
+        ? { video: { deviceId: { exact: selectedDeviceId } } }
+        : { video: true };
+
+      video = createCapture(constraints);
+      video.size(320, 240);
+      video.hide();
+      flippedVideo = ml5.flipImage(video);
+      running = true;
+      classifyVideo();
+    }
+
+    // 정지: 분류 멈추고 카메라 끔
+    function stopSketch() {
+      running = false;
+      if (video) {
+        video.remove();
+        video = null;
+      }
+      setStatus('정지되었습니다. 카메라를 바꾼 뒤 "다시 시작"을 누르세요.', 'info');
+      document.getElementById('stop-btn').disabled = true;
+      document.getElementById('resume-btn').disabled = false;
+    }
+
+    // 다시 시작: 현재 선택된 카메라로 재가동
+    function resumeSketch() {
+      if (!started) return;
+      selectedDeviceId = document.getElementById('camera-select').value;
+      setStatus('다시 시작합니다...', 'success');
+      startCamera();
+      document.getElementById('stop-btn').disabled = false;
+      document.getElementById('resume-btn').disabled = true;
+    }
+
+    function draw() {
+      if (!running || !flippedVideo) {
+        return;
+      }
+      background(0);
+      image(flippedVideo, 0, 0);
+    }
+
+    function classifyVideo() {
+      if (!running || !video) return;
+      flippedVideo = ml5.flipImage(video);
+      classifier.classify(flippedVideo, gotResult);
+      flippedVideo.remove();
+    }
+
+    function gotResult(error, results) {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      if (!running) return;
+      label = String(results[0].label);
+      const badge = document.getElementById('label-badge');
+      badge.innerHTML = label + '<small>현재 인식된 라벨</small>';
+      if (serial) serial.write(label);
+      classifyVideo();
+    }
+
+    // 페이지 로드시 카메라 목록 준비
+    window.addEventListener('load', loadCameraList);
+  </script>
+</body>
+</html>
